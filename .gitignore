@@ -6,3 +6,9 @@
 
 # Ignore macOS files
 .DS_Store
+
+# Sphinx build output
+_build/
+
+# Python virtual environment
+.venv/

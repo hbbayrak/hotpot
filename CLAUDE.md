@@ -13,6 +13,22 @@ All `.md` files (except root README.md) are in the `notes/` worktree (a separate
 
 See `notes/SETUP.md` for full details on this worktree setup.
 
+**Build & view Sphinx documentation (ReadTheDocs-style):**
+```bash
+# Build (creates virtual env and installs deps on first run)
+./notes/scripts/build-docs.sh
+
+# View in browser
+open notes/_build/html/index.html
+```
+
+**Generate single combined document:**
+```bash
+./notes/scripts/combine-notes.sh > combined-docs.md
+./notes/scripts/combine-notes.sh | pandoc --toc -s -o docs.html
+./notes/scripts/combine-notes.sh | pandoc --toc -o docs.docx
+```
+
 ## Project Overview
 
 CCD Data Stewardship Platform - a humanitarian data sharing platform enabling aid organizations to manage beneficiary data collectively. Features deduplication, referrals between organizations, and beneficiary data access.

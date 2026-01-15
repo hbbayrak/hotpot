@@ -18,9 +18,36 @@ export DOTNET_ROOT="/opt/homebrew/opt/dotnet@8/libexec"
 export PATH="/opt/homebrew/opt/dotnet@8/bin:$PATH"
 ```
 
-## Step 1: Start PostgreSQL Database
+## Step 1: Start Docker Services
 
-Start a PostgreSQL container with the default credentials:
+The project uses Docker Compose to manage PostgreSQL and Directus. From the `server/` directory:
+
+```bash
+cd server
+
+# Start all services (PostgreSQL + Directus)
+docker-compose up -d
+
+# Or start specific services
+docker-compose up -d database          # PostgreSQL only
+docker-compose up -d directus          # Directus + its database
+```
+
+### Verify Services
+
+```bash
+# Check running containers
+docker ps --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
+
+# Expected output:
+# ccd-server        Up ...    0.0.0.0:5432->5432/tcp
+# ccd-directus      Up ...    0.0.0.0:8055->8055/tcp
+# ccd-directus-db   Up ...    5432/tcp
+```
+
+### Alternative: Standalone PostgreSQL
+
+If you prefer running PostgreSQL without docker-compose:
 
 ```bash
 docker run -d \
@@ -38,20 +65,20 @@ Wait for PostgreSQL to be ready:
 docker exec ccd-postgres pg_isready -U ccd-server -d ccd-server
 ```
 
-### Useful Database Commands
+### Useful Docker Commands
 
 ```bash
-# Connect to database
-docker exec -it ccd-postgres psql -U ccd-server -d ccd-server
+# Stop all services
+docker-compose down
 
-# Stop container
-docker stop ccd-postgres
+# Stop and remove volumes (fresh start)
+docker-compose down -v
 
-# Start container again
-docker start ccd-postgres
+# View logs
+docker-compose logs -f directus
 
-# Remove container (to start fresh)
-docker rm ccd-postgres
+# Connect to app database
+docker exec -it ccd-server psql -U ccd-server -d ccd-server
 ```
 
 ## Step 2: Configure and Run the Server
@@ -164,6 +191,7 @@ You should now see the full application with sidebar navigation.
 | Account | Username/Email | Password |
 |---------|----------------|----------|
 | Superadmin | `superadmin` | `superadmin_password` |
+| Directus Admin | `admin@example.com` | `admin123` |
 | Admin User (after setup) | `test@test.com` | `password123` |
 
 ### URLs
@@ -172,6 +200,7 @@ You should now see the full application with sidebar navigation.
 |---------|-----|
 | Client | http://localhost:3000 |
 | Server API | http://localhost:5000 |
+| Directus CMS | http://localhost:8055 |
 | API Docs | http://localhost:5000/swagger (if enabled) |
 
 ### Database Connection
@@ -222,6 +251,60 @@ If you still experience issues, manually clear localStorage:
 ```javascript
 // Run in browser console
 localStorage.clear(); location.reload();
+```
+
+---
+
+## Directus CMS Setup
+
+Directus is used for managing translations and CMS content. It runs on port 8055 with its own PostgreSQL database.
+
+### Access Directus Admin
+
+- **URL**: http://localhost:8055
+- **Email**: `admin@example.com`
+- **Password**: `admin123`
+
+### Generate API Token
+
+To use Directus from the client application, you need an API token:
+
+1. Log in to Directus at http://localhost:8055
+2. Go to **Settings** (gear icon) → **Access Tokens**
+3. Click **+ Create Token**
+4. Give it a name (e.g., "Local Dev") and copy the token
+5. Update your `client/.env`:
+
+```env
+VITE_DIRECTUS_URL=http://localhost:8055
+VITE_DIRECTUS_TOKEN=your-generated-token
+```
+
+### Seed Translations
+
+After setting up Directus collections, seed translation data:
+
+```bash
+# From project root
+VITE_DIRECTUS_URL=http://localhost:8055 \
+VITE_DIRECTUS_TOKEN=your-token \
+npx tsx client/deployment/seed-directus.ts
+
+# Dry run (preview changes without applying)
+npx tsx client/deployment/seed-directus.ts --dry-run
+
+# Seed specific language
+npx tsx client/deployment/seed-directus.ts --lang en-US
+```
+
+### Directus Database Connection
+
+```
+Host: localhost (via ccd-directus-db container)
+Port: 5432 (internal, not exposed)
+Database: directus
+Username: directus
+Password: directus
 ```
 
 ---
