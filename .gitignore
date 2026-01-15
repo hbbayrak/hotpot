@@ -1,0 +1,8 @@
+# Override .git/info/exclude patterns for notes worktree
+# Negate all patterns so they're tracked in this branch
+!CLAUDE.md
+!**/README.md
+!scripts/
+
+# Ignore macOS files
+.DS_Store
