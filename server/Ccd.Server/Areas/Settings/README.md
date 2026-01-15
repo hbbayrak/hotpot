@@ -16,8 +16,9 @@ Manages global system settings for the deployment. Settings include deployment n
 |--------|----------|------------|-------------|
 | GET | `/` | User | Get current system settings |
 | PUT | `/` | Superadmin | Update system settings |
+| POST | `/initial-setup` | Superadmin | Complete initial deployment setup |
 
-**Note:** Only the superadmin (SYSTEM_USER) can update settings.
+**Note:** Only the superadmin (SYSTEM_USER) can update settings or perform initial setup.
 
 ## Services
 
@@ -57,6 +58,35 @@ FundingSources = ["BHA", "Other"]
 ### SettingsUpdateRequest
 
 All settings fields are optional for partial updates.
+
+### InitialSetupRequest
+
+Used for first-time deployment setup. Creates settings, organization, and admin user in a single atomic transaction.
+
+| Property | Type | Required | Validation |
+|----------|------|----------|------------|
+| DeploymentName | string | Yes | - |
+| DeploymentCountry | string | Yes | - |
+| AdminLevel1Name | string | Yes | - |
+| AdminLevel2Name | string | Yes | - |
+| AdminLevel3Name | string | Yes | - |
+| AdminLevel4Name | string | Yes | - |
+| MetabaseUrl | string | No | - |
+| FundingSources | List<string> | No | - |
+| OrganizationName | string | Yes | MinLength(3), MaxLength(100) |
+| IsMpcaActive | bool | No | - |
+| IsWashActive | bool | No | - |
+| IsShelterActive | bool | No | - |
+| IsFoodAssistanceActive | bool | No | - |
+| IsLivelihoodsActive | bool | No | - |
+| IsProtectionActive | bool | No | - |
+| FirstName | string | Yes | MinLength(2), MaxLength(30) |
+| LastName | string | Yes | MinLength(2), MaxLength(30) |
+| Email | string | Yes | EmailAddress |
+| Password | string | Yes | MinLength(8), MaxLength(30) |
+| Permissions | List<string> | No | - |
+
+**Note:** This endpoint can only be called once. It will fail if any organizations already exist in the system.
 
 ## Notes
 

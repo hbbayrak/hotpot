@@ -2,7 +2,7 @@
 
 ## Purpose
 
-Superadmin-only deployment configuration page. Allows system administrators to configure global platform settings that affect all organizations.
+Superadmin-only deployment configuration page. Allows system administrators to configure global platform settings that affect all organizations. Also handles **initial setup** for new deployments (creating first organization and admin user).
 
 ## Route
 
@@ -15,10 +15,29 @@ SettingsPage/
 ├── SettingsPage.tsx    # Settings form
 ├── const.ts            # Default values, countries list
 ├── validations.ts      # Zod schema
+├── components/
+│   └── InitialSetupSection/  # First org/user creation
+│       ├── InitialSetupSection.tsx
+│       ├── validation.ts
+│       └── index.ts
 └── index.ts            # Public exports
 ```
 
 ## Page Features
+
+### InitialSetupSection
+
+Conditional component that appears **only when no organizations exist** in the system. Allows superadmin to bootstrap the platform by creating:
+
+1. **First Organization** - Name and service toggles (MPCA, WASH, Shelter, etc.)
+2. **First Admin User** - Name, email, password, and permissions
+
+After initial setup is complete, this section hides automatically and ongoing org/user management happens via `/organizations` and `/users` pages.
+
+**Implementation:**
+- Uses `useHasOrganizations()` hook to check if setup is needed
+- Creates organization first, then user linked to that org
+- Shows success message after completion
 
 ### SettingsPage
 
@@ -31,6 +50,7 @@ Standalone settings form (not within standard layout):
 
 **Layout:**
 - Centered card design
+- InitialSetupSection at top (conditional)
 - Theme toggle in top-right corner
 - "Back to Sign In" link (logout)
 

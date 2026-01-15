@@ -243,8 +243,11 @@ All list endpoints support pagination:
 
 | Method | Endpoint | Permission | Description |
 |--------|----------|------------|-------------|
-| GET | `/` | Superadmin | Get settings |
-| PATCH | `/` | Superadmin | Update settings |
+| GET | `/` | User | Get settings |
+| PUT | `/` | Superadmin | Update settings |
+| POST | `/initial-setup` | Superadmin | Complete initial deployment setup |
+
+**Initial Setup:** The `/initial-setup` endpoint creates deployment settings, first organization, and admin user in a single atomic transaction. Can only be called when no organizations exist.
 
 ### Administrative Regions (`/api/v1/admin-regions`)
 

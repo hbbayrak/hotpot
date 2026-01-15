@@ -366,12 +366,22 @@ enum UserRole {
 
 | File | Purpose |
 |------|---------|
-| `vite.config.ts` | Build config, path aliases (`@/`), security headers |
+| `vite.config.ts` | Build config, path aliases (`@/`), security headers, CSP removal in dev |
 | `tailwind.config.cjs` | Tailwind customization |
 | `tsconfig.json` | TypeScript config |
 | `.eslintrc.cjs` | ESLint rules |
 | `.prettierrc.json` | Code formatting |
 | `components.json` | shadcn/ui component registry |
+
+## Development Features
+
+### Automatic CSP Removal
+
+In development mode, a Vite plugin automatically removes the Content-Security-Policy meta tag from `index.html`. This allows Vite's HMR (Hot Module Replacement) scripts to work without manual editing.
+
+### Stale Session Handling
+
+The API interceptor automatically detects stale sessions (401/403 responses when a token exists in localStorage). When detected, it clears localStorage and reloads the page to ensure a clean state. This prevents infinite redirect loops when the database is reset.
 
 ---
 

@@ -17,6 +17,8 @@ See `notes/SETUP.md` for full details on this worktree setup.
 
 CCD Data Stewardship Platform - a humanitarian data sharing platform enabling aid organizations to manage beneficiary data collectively. Features deduplication, referrals between organizations, and beneficiary data access.
 
+**For local development setup, see `notes/APP_SETUP.md`.**
+
 ## Commands
 
 ### Server (.NET 8)

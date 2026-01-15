@@ -92,15 +92,6 @@ VITE_DIRECTUS_URL=http://localhost:8055
 VITE_DIRECTUS_TOKEN=placeholder
 ```
 
-### Disable CSP for Development
-
-Edit `client/index.html` and comment out the Content-Security-Policy meta tag:
-
-```html
-<!-- CSP disabled for development - re-enable for production -->
-<!-- <meta http-equiv="Content-Security-Policy" content="script-src 'self';" /> -->
-```
-
 ### Install Dependencies and Run
 
 ```bash
@@ -111,17 +102,21 @@ yarn dev
 
 The client will be available at http://localhost:3000
 
-## Step 4: Initial Deployment Settings
+> **Note**: The CSP (Content Security Policy) is automatically disabled in development mode via a Vite plugin. No manual editing of `index.html` is required.
+
+## Step 4: Initial Setup (UI-based)
 
 1. Open http://localhost:3000
 2. Login with superadmin credentials:
    - **Username**: `superadmin`
    - **Password**: `superadmin_password`
 
-3. Configure deployment settings:
+3. You'll see the **Deployment Settings** page with an **Initial Setup Required** section at the top.
 
-| Field | Value |
-|-------|-------|
+### Configure Deployment Settings
+
+| Field | Example Value |
+|-------|---------------|
 | Deployment Name | `Local Dev` |
 | Deployment Country | `Ireland` |
 | Admin Level 1 Name | `Province` |
@@ -130,95 +125,33 @@ The client will be available at http://localhost:3000
 | Admin Level 4 Name | `Electoral Division` |
 | Metabase Iframe URL | (leave default) |
 
-4. Add funding sources:
-   - Keep existing: `BHA`, `Other`
-   - Add: `FCDO`, `ECHO`
+Add funding sources:
+- Keep existing: `BHA`, `Other`
+- Add: `FCDO`, `ECHO`
 
-5. Click **Save settings**
+Click **Save settings**.
 
-## Step 5: Create Organization and User
+### Create First Organization and Admin User
 
-The superadmin account is only for deployment settings. You need to create an organization and a regular user to use the full application.
+In the **Initial Setup Required** section:
 
-### Get Authentication Token
+1. **Organization Details**:
+   - Enter organization name (e.g., "Test Organization")
+   - Toggle the services your organization provides (MPCA, WASH, Shelter, etc.)
 
-```bash
-TOKEN=$(curl -s -X POST http://localhost:5000/api/v1/authentication/login \
-  -H "Content-Type: application/json" \
-  -d '{"username":"superadmin","password":"superadmin_password"}' | jq -r '.token')
+2. **Admin User Details**:
+   - First Name: `Test`
+   - Last Name: `User`
+   - Email: `test@test.com`
+   - Password: (min 8 characters, e.g., `password123`)
+   - Select permissions (Deduplication, Referrals, Booking)
 
-echo $TOKEN
-```
+3. Click **Complete Initial Setup**
 
-### Create Organization
+## Step 5: Login as Admin User
 
-```bash
-curl -s -X POST http://localhost:5000/api/v1/organizations \
-  -H "Content-Type: application/json" \
-  -H "Authorization: Bearer $TOKEN" \
-  -d '{
-    "name": "Test Organization",
-    "isMpcaActive": true,
-    "isWashActive": true,
-    "isShelterActive": true,
-    "isFoodAssistanceActive": true,
-    "isLivelihoodsActive": true,
-    "isProtectionActive": true,
-    "activities": []
-  }'
-```
-
-Save the returned organization `id` for the next step.
-
-### Create User
-
-Due to email service configuration, creating users via API may fail. Use this database approach instead:
-
-```bash
-# Replace ORG_ID with your organization ID from the previous step
-ORG_ID="your-organization-id-here"
-
-# Create user
-docker exec ccd-postgres psql -U ccd-server -d ccd-server -c "
-INSERT INTO \"user\" (id, email, password, first_name, last_name, language, activated_at, created_at, updated_at, is_deleted)
-VALUES (
-  'a1111111-1111-1111-1111-111111111111',
-  'test@test.com',
-  'placeholder',
-  'Test',
-  'User',
-  'en',
-  NOW(),
-  NOW(),
-  NOW(),
-  false
-);"
-
-# Link user to organization
-docker exec ccd-postgres psql -U ccd-server -d ccd-server -c "
-INSERT INTO user_organization (organization_id, user_id, role, permissions)
-VALUES (
-  '$ORG_ID',
-  'a1111111-1111-1111-1111-111111111111',
-  'admin',
-  '[\"Deduplication\", \"Referrals\", \"Booking\"]'
-);"
-```
-
-### Set User Password
-
-```bash
-curl -s -X PATCH http://localhost:5000/api/v1/users/a1111111-1111-1111-1111-111111111111 \
-  -H "Content-Type: application/json" \
-  -H "Authorization: Bearer $TOKEN" \
-  -H "organization-id: $ORG_ID" \
-  -d '{"password": "password123"}'
-```
-
-## Step 6: Login and Use the Application
-
-1. Go to http://localhost:3000
-2. Login with your new user:
+1. Click "Back to Sign In" at the bottom of the Settings page
+2. Login with your new admin credentials:
    - **Email**: `test@test.com`
    - **Password**: `password123`
 
@@ -231,7 +164,7 @@ You should now see the full application with sidebar navigation.
 | Account | Username/Email | Password |
 |---------|----------------|----------|
 | Superadmin | `superadmin` | `superadmin_password` |
-| Test User | `test@test.com` | `password123` |
+| Admin User (after setup) | `test@test.com` | `password123` |
 
 ### URLs
 
@@ -257,7 +190,6 @@ Password: test123
 
 - Check browser console (F12) for errors
 - Ensure `.env` file exists with correct `VITE_API_URL`
-- Ensure CSP meta tag is commented out in `index.html`
 - Restart the client after changing `.env`
 
 ### Port 5000 already in use
@@ -276,4 +208,71 @@ docker ps | grep ccd-postgres
 Ensure you're using .NET 8:
 ```bash
 dotnet --version  # Should be 8.x.x
+```
+
+### Email sending warnings
+
+When creating users locally, you may see a warning in the server console about failed email sending. This is expected in local development without SendGrid configured - the user will still be created successfully.
+
+### Stale session / infinite redirect loop
+
+If you reset the database while the browser has old session data, the app will automatically detect the stale token (401/403 responses) and clear localStorage, then reload. This is handled automatically.
+
+If you still experience issues, manually clear localStorage:
+```javascript
+// Run in browser console
+localStorage.clear(); location.reload();
+```
+
+---
+
+## Advanced: Manual Setup (Alternative)
+
+If you prefer to create the organization and user via API/database instead of the UI:
+
+### Get Authentication Token
+
+```bash
+TOKEN=$(curl -s -X POST http://localhost:5000/api/v1/authentication/login \
+  -H "Content-Type: application/json" \
+  -d '{"username":"superadmin","password":"superadmin_password"}' | jq -r '.token')
+```
+
+### Create Organization
+
+```bash
+ORG_RESPONSE=$(curl -s -X POST http://localhost:5000/api/v1/organizations \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer $TOKEN" \
+  -d '{
+    "name": "Test Organization",
+    "isMpcaActive": true,
+    "isWashActive": true,
+    "isShelterActive": true,
+    "isFoodAssistanceActive": true,
+    "isLivelihoodsActive": true,
+    "isProtectionActive": true,
+    "activities": []
+  }')
+
+ORG_ID=$(echo $ORG_RESPONSE | jq -r '.id')
+echo "Organization ID: $ORG_ID"
+```
+
+### Create User via API
+
+```bash
+curl -s -X POST http://localhost:5000/api/v1/users \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "organization-id: $ORG_ID" \
+  -d '{
+    "email": "test@test.com",
+    "firstName": "Test",
+    "lastName": "User",
+    "password": "password123",
+    "organizationId": "'$ORG_ID'",
+    "role": "admin",
+    "permissions": ["deduplication", "referral", "booking"]
+  }'
 ```
