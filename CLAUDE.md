@@ -2,6 +2,17 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Project Notes Structure
+
+All `.md` files (except root README.md) are in the `notes/` worktree (a separate git branch mounted via `git worktree`).
+
+**When searching for documentation:**
+- Search directly in `notes/` directory, not through symlinks
+- Symlinks in the main project (e.g., `client/README.md`) point to `notes/client/README.md`
+- Tools like Glob/Grep may skip symlinks by default - always search `notes/` for markdown files
+
+See `notes/SETUP.md` for full details on this worktree setup.
+
 ## Project Overview
 
 CCD Data Stewardship Platform - a humanitarian data sharing platform enabling aid organizations to manage beneficiary data collectively. Features deduplication, referrals between organizations, and beneficiary data access.
